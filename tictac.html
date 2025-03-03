@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            text-align: center;
+        }
+
+        .game-container {
+            width: 400px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .buttons button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.3s ease;
+        }
+
+        .buttons button:hover {
+            background: #555;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            width: 100%;
+        }
+
+        .board div {
+            background: #fff;
+            color: #333;
+            font-size: 2.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            height: 100px;
+            border-radius: 5px;
+            transition: 0.2s ease;
+        }
+
+        .board div:hover {
+            background: #f0f0f0;
+        }
+
+        .result {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .reset-btn {
+            background: #ff7e5f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #feb47b;
+        }
+
+        @media (max-width: 500px) {
+            .game-container {
+                width: 90%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .board div {
+                font-size: 2rem;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Tic-Tac-Toe</h1>
+        <div class="buttons">
+            <button id="pvp">Player vs Player</button>
+            <button id="pvc">Player vs Computer</button>
+        </div>
+        <div class="board" id="board"></div>
+        <div id="result" class="result"></div>
+        <button id="reset" class="reset-btn">Reset Game</button>
+    </div>
+
+    <script>
+        let currentPlayer = 'X';
+        let boardState = ['', '', '', '', '', '', '', '', ''];
+        let gameActive = true;
+        let isPvC = false;
+
+        document.getElementById('pvp').addEventListener('click', () => startGame(false));
+        document.getElementById('pvc').addEventListener('click', () => startGame(true));
+        document.getElementById('reset').addEventListener('click', resetGame);
+
+        function startGame(pvc) {
+            isPvC = pvc;
+            gameActive = true;
+            currentPlayer = 'X';
+            boardState = ['', '', '', '', '', '', '', '', ''];
+            document.getElementById('result').textContent = '';
+            renderBoard();
+        }
+
+        function resetGame() {
+            gameActive = true;
+            currentPlayer = 'X';
+            boardState = ['', '', '', '', '', '', '', '', ''];
+            document.getElementById('result').textContent = '';
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            boardState.forEach((cell, index) => {
+                const cellElement = document.createElement('div');
+                cellElement.textContent = cell;
+                cellElement.addEventListener('click', () => makeMove(index));
+                board.appendChild(cellElement);
+            });
+        }
+
+        function makeMove(index) {
+            if (boardState[index] !== '' || !gameActive) return;
+
+            boardState[index] = currentPlayer;
+            renderBoard();
+            checkWinner();
+
+            if (gameActive && isPvC && currentPlayer === 'X') {
+                setTimeout(() => computerMove(), 500);
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            }
+        }
+
+        function computerMove() {
+            let availableMoves = boardState.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
+            let randomMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+            boardState[randomMove] = 'O';
+            renderBoard();
+            checkWinner();
+            currentPlayer = 'X';
+        }
+
+        function checkWinner() {
+            const winPatterns = [
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [0, 3, 6],
+                [1, 4, 7],
+                [2, 5, 8],
+                [0, 4, 8],
+                [2, 4, 6]
+            ];
+
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (boardState[a] !== '' && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
+                    gameActive = false;
+                    document.getElementById('result').textContent = `${currentPlayer} wins!`;
+                    highlightWinningCells(pattern);
+                    return;
+                }
+            }
+
+            if (!boardState.includes('')) {
+                gameActive = false;
+                document.getElementById('result').textContent = "It's a draw!";
+            }
+        }
+
+        function highlightWinningCells(pattern) {
+            const cells = document.querySelectorAll('.board div');
+            pattern.forEach(index => {
+                cells[index].style.backgroundColor = '#ffeb3b';
+                cells[index].style.transition = 'background-color 0.5s ease';
+            });
+        }
+    </script>
+</body>
+</html>
